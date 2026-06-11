@@ -1,7 +1,4 @@
-"""
-collector.py
-PubMed API'den Journal of Biomedical Informatics makalelerini toplar.
-"""
+# From PubMed API Journal of Biomedical Informatics articles (2015-2024)
 
 import time
 import json
@@ -32,7 +29,7 @@ class PubMedCollector:
         url  = ESEARCH_URL + "?" + urllib.parse.urlencode(params)
         data = self._get_json(url)
         ids  = data["esearchresult"]["idlist"]
-        print(f"Bulunan makale sayısı: {len(ids)} ({start_year}-{end_year})")
+        print(f"Number of articles found: {len(ids)} ({start_year}-{end_year})")
         return ids
 
     def fetch_articles(self, start_year: int, end_year: int, batch_size: int = 100) -> list:
@@ -41,21 +38,21 @@ class PubMedCollector:
 
         for i in range(0, len(ids), batch_size):
             batch = ids[i : i + batch_size]
-            print(f"Çekiliyor: {i+1}-{min(i+batch_size, len(ids))} / {len(ids)}")
+            print(f"Fetching: {i+1}-{min(i+batch_size, len(ids))} / {len(ids)}")
             batch_articles = self._fetch_batch(batch)
             articles.extend(batch_articles)
             time.sleep(self.sleep_seconds)
 
 # if there are articles that we get from 2025 delete them before saving
         articles = [a for a in articles if a["abstract"].strip() and 2015 <= a["year"] <= 2024] 
-        print(f"Özeti olan makale sayısı: {len(articles)}")
+        print(f"Number of articles with abstracts: {len(articles)}")
         return articles
 
     def save(self, articles: list, path: str) -> None:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(articles, f, ensure_ascii=False, indent=2)
-        print(f"Kaydedildi: {path} ({len(articles)} makale)")
+        print(f"Saved: {path} ({len(articles)} articles)")
 
     def _fetch_batch(self, pmids: list) -> list:
         params = {
@@ -105,7 +102,6 @@ class PubMedCollector:
     def _get_text(self, url: str) -> str:
         with urllib.request.urlopen(url) as resp:
             return resp.read().decode("utf-8")
-
 
 # Test
 if __name__ == "__main__":
